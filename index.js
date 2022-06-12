@@ -1,141 +1,153 @@
-const express = require('express')
-app = express()
+var gMap;
 
-var url = require('url');
-var dt = require('./date-time');
+var favoritePlaces = [
+    {content:'<strong>Lafayette, Louisiana <strong>', coordinates:{lat:30.2241,lng:-92.0198}},
+    {content:'<strong>Romeoville, Illinois <strong>', coordinates:{lat:41.6475,lng:-88.0895}},
+    {content:'Orlando, Florida', coordinates:{lat:28.5384,lng:-81.3789}},
+    {content:'Houston, Texas', coordinates:{lat:29.7604,lng:-95.3698}},
+    {content:'Austin, Texas', coordinates:{lat:30.2672,lng:-97.7431}},
+    {content:'Chicago, Illinois', coordinates:{lat:41.8781,lng:-87.6298}},
+    {content:'Los Angeles, California', coordinates:{lat:34.0522,lng:-118.2437}},
+    {content:'Las Vegas, Nevada', coordinates:{lat:36.1716,lng:-115.1391}},
+    {content:'New York City, New York', coordinates:{lat:40.7128,lng:-74.0060}},
+    {content:'Washington, D.C.', coordinates:{lat:38.9072,lng:-77.0369}}
+]; 
+var currentPlaceIndex = 9;
+var currentPlace = favoritePlaces[currentPlaceIndex];
+var score = 0;
+var i = 0;
 
-const port = process.env.PORT || 3000
-const majorVersion = 1
-const minorVersion = 2
+function initMap() {
+    //create new map
+    gMap = new google.maps.Map(document.getElementById('myMapID'), {
+        center: {lat:41.878, lng:10}, zoom: 3});
 
-// Use Express to publish static HTML, CSS, and JavaScript files that run in the browser. 
-app.use(express.static(__dirname + '/static'))
-
-// The app.get functions below are being processed in Node.js running on the server.
-// Implement a custom About page.
-app.get('/about', (request, response) => {
-	console.log('Calling "/about" on the Node.js server.')
-	response.type('text/plain')
-	response.send('About Node.js on Azure Template.')
-})
-
-app.get('/version', (request, response) => {
-	console.log('Calling "/version" on the Node.js server.')
-	response.type('text/plain')
-	response.send('Version: '+majorVersion+'.'+minorVersion)
-})
-
-// Return the value of 2 plus 2.
-app.get('/2plus2', (request, response) => {
-	console.log('Calling "/2plus2" on the Node.js server.')
-	response.type('text/plain')
-	response.send('4')
-})
-
-// Add x and y which are both passed in on the URL. 
-app.get('/add-two-integers', (request, response) => {
-	console.log('Calling "/add-two-integers" on the Node.js server.')
-	var inputs = url.parse(request.url, true).query
-	let x = parseInt(inputs.x)
-	let y = parseInt(inputs.y)
-	let sum = x + y
-	response.type('text/plain')
-	response.send(sum.toString())
-})
-
-// Template for calculating BMI using height in feet/inches and weight in pounds.
-app.get('/calculate-bmi', (request, response) => {
-	console.log('Calling "/calculate-bmi" on the Node.js server.')
-	var inputs = url.parse(request.url, true).query
-	const heightFeet = parseInt(inputs.feet)
-	const heightInches = parseInt(inputs.inches)
-	const weight = parseInt(inputs.lbs)
-
-	console.log('Height:' + heightFeet + '\'' + heightInches + '\"')
-	console.log('Weight:' + weight + ' lbs.')
-
-	// Todo: Implement unit conversions and BMI calculations.
-	// Todo: Return BMI instead of Todo message.
-
-	response.type('text/plain')
-	response.send('Todo: Implement "/calculate-bmi"')
-})
-
-// Test a variety of functions.
-app.get('/test', (request, response) => {
-    // Write the request to the log. 
-    console.log(request);
-
-    // Return HTML.
-    response.writeHead(200, {'Content-Type': 'text/html'});
-    response.write('<h3>Testing Function</h3>')
-
-    // Access function from a separate JavaScript module.
-    response.write("The date and time are currently: " + dt.myDateTime() + "<br><br>");
-
-    // Show the full url from the request. 
-    response.write("req.url="+request.url+"<br><br>");
-
-    // Suggest adding something tl the url so that we can parse it. 
-    response.write("Consider adding '/test?year=2017&month=July' to the URL.<br><br>");
+    google.maps.event.addListener(gMap, 'idle', function() {
+        updateGame()
+    });
     
-	// Parse the query string for values that are being passed on the URL.
-	var q = url.parse(request.url, true).query;
-    var txt = q.year + " " + q.month;
-    response.write("txt="+txt);
-
-    // Close the response
-    response.end('<h3>The End.</h3>');
-})
-
-// Return Batman as JSON.
-var spiderMan = {
-	"firstName":"Bruce",
-	"lastName":"Wayne",
-	"preferredName":"Batman",
-	"email":"darkknight@lewisu.edu",
-	"phoneNumber":"800-bat-mann",
-	"city":"Gotham",
-	"state":"NJ",
-	"zip":"07101",
-	"lat":"40.73",
-	"lng":"-74.17",
-	"favoriteHobby":"Flying",
-	"class":"cpsc-24700-001",
-	"room":"AS-104-A",
-	"startTime":"2 PM CT",
-	"seatNumber":"",
-	"inPerson":[
-		"Monday",
-		"Wednesday"
-	],
-	"virtual":[
-		"Friday"
-	]
+    google.maps.event.addEventListener('dblclick', function (e) {
+        var marker = new google.maps.Marker({position:{lat:30.2241,lng:-92.0198}, map:gMap});
+        var marker = new google.maps.Marker({position:{lat:41.6475,lng:-88.0895}, map:gMap});
+        var marker = new google.maps.Marker({position:{lat:28.5384,lng:-81.3789}, map:gMap});
+        var marker = new google.maps.Marker({position:{lat:29.7604,lng:-95.3698}, map:gMap});
+        var marker = new google.maps.Marker({position:{lat:30.2672,lng:-97.7431}, map:gMap});
+        var marker = new google.maps.Marker({position:{lat:41.8781,lng:-87.6298}, map:gMap});
+        var marker = new google.maps.Marker({position:{lat:34.0522,lng:-118.2437}, map:gMap});
+        var marker = new google.maps.Marker({position:{lat:36.1716,lng:-115.1391}, map:gMap});
+        var marker = new google.maps.Marker({position:{lat:40.7128,lng:-74.0060}, map:gMap});
+        var marker = new google.maps.Marker({position:{lat:38.9072,lng:-77.0369}, map:gMap});
+        score = 10;
+      });
 }
 
-app.get('/batman', (request, response) => {
-	console.log('Calling "/batman" on the Node.js server.')
-	response.type('application/json')
-	response.send(JSON.stringify(spiderMan, null, 4))
-})
+function updateGame(){
+    console.log('function UpdateGame()!');
+    var zoomLevel = gMap.getZoom()
+    var inBounds = false;
 
-// Custom 404 page.
-app.use((request, response) => {
-  response.type('text/plain')
-  response.status(404)
-  response.send('404 - Not Found')
-})
+    if (gMap.getBounds().contains(currentPlace.coordinates)) {
+        inBounds = true;
+        console.log("inBounds:"+inBounds+" zoomLevel:"+zoomLevel);
+    }  
+}
 
-// Custom 500 page.
-app.use((err, request, response, next) => {
-  console.error(err.message)
-  response.type('text/plain')
-  response.status(500)
-  response.send('500 - Server Error')
-})
 
-app.listen(port, () => console.log(
-  `Express started at \"http://localhost:${port}\"\n` +
-  `press Ctrl-C to terminate.`)
-)
+function addMarker(markerContent){
+    var marker = new google.maps.Marker(
+        {position:markerContent.coordinates, map:gMap}
+    );
+}
+
+function SetScore(score) {
+    document.getElementById("score-id").value = score;  
+  }
+
+  function SetHint(currentHint) {
+    document.getElementById("Hint").value = currentHint;  
+  }
+  function Guess(){
+    var guess = document.getElementById('guess-id').value;
+    var hint = document.getElementById('Hint').value;
+    if(guess == "Lafayette" && hint == 1){
+    score += 1;
+    var marker = new google.maps.Marker({position:{lat:30.2241,lng:-92.0198}, map:gMap});
+    window.alert("You found a location! Now on to the next one!")
+    }
+    if(guess == "Romeoville" && hint == 2){
+    score += 1;
+    var marker = new google.maps.Marker({position:{lat:41.6475,lng:-88.0895}, map:gMap});
+    window.alert("You found a location! Now on to the next one!")
+    }
+    if(guess == "Orlando" && hint == 3){
+    score += 1;
+    var marker = new google.maps.Marker({position:{lat:28.5384,lng:-81.3789}, map:gMap});
+    window.alert("You found a location! Now on to the next one!")
+    }
+    if(guess == "Houston" && hint == 4){
+    score += 1;
+    var marker = new google.maps.Marker({position:{lat:29.7604,lng:-95.3698}, map:gMap});
+    window.alert("You found a location! Now on to the next one!")
+    }
+    if(guess == "Austin" && hint == 5){
+    score += 1;
+    var marker = new google.maps.Marker({position:{lat:30.2672,lng:-97.7431}, map:gMap});
+    window.alert("You found a location! Now on to the next one!")
+    }
+    if(guess == "Chicago" && hint == 6){
+    score += 1;
+    var marker = new google.maps.Marker({position:{lat:41.8781,lng:-87.6298}, map:gMap});
+    window.alert("You found a location! Now on to the next one!")
+    }
+    if(guess == "Los Angeles" && hint == 7){
+    score += 1;
+    var marker = new google.maps.Marker({position:{lat:34.0522,lng:-118.2437}, map:gMap});
+    window.alert("You found a location! Now on to the next one!")
+    }
+    if(guess == "Las Vegas" && hint == 8){
+    score += 1;
+    var marker = new google.maps.Marker({position:{lat:36.1716,lng:-115.1391}, map:gMap});
+    window.alert("You found a location! Now on to the next one!")
+    }
+    if(guess == "New York City" && hint == 9){
+    score += 1;
+    var marker = new google.maps.Marker({position:{lat:40.7128,lng:-74.0060}, map:gMap});
+    window.alert("You found a location! Now on to the next one!")
+    }
+    if(guess == "Washington, DC" && hint == 10){
+    score += 1;
+    var marker = new google.maps.Marker({position:{lat:38.9072,lng:-77.0369}, map:gMap});
+    window.alert("You found a location! Now on to the next one!")
+    }
+
+
+    if(score == 10){
+        window.alert("You Win!");
+    }
+
+    SetScore(score);
+
+    
+}
+function initApplication(){
+    console.log('Map Mania Lite - Starting!');
+}
+
+function directions() {
+    alert("Welcome! Use the drop down menu to select a hint then type in your guess! Hint: Type in just the city, except for the last hint. To Win Now: double click Score.")
+  }
+
+function winner() {
+    window.alert("Press OK if you are sure you want to auto win.")
+    var marker = new google.maps.Marker({position:{lat:30.2241,lng:-92.0198}, map:gMap});
+    var marker = new google.maps.Marker({position:{lat:41.6475,lng:-88.0895}, map:gMap});
+    var marker = new google.maps.Marker({position:{lat:28.5384,lng:-81.3789}, map:gMap});
+    var marker = new google.maps.Marker({position:{lat:29.7604,lng:-95.3698}, map:gMap});
+    var marker = new google.maps.Marker({position:{lat:30.2672,lng:-97.7431}, map:gMap});
+    var marker = new google.maps.Marker({position:{lat:41.8781,lng:-87.6298}, map:gMap});
+    var marker = new google.maps.Marker({position:{lat:34.0522,lng:-118.2437}, map:gMap});
+    var marker = new google.maps.Marker({position:{lat:36.1716,lng:-115.1391}, map:gMap});
+    var marker = new google.maps.Marker({position:{lat:40.7128,lng:-74.0060}, map:gMap});
+    var marker = new google.maps.Marker({position:{lat:38.9072,lng:-77.0369}, map:gMap});
+    score = 10;
+}
